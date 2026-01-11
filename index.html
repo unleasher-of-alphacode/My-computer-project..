@@ -120,4 +120,175 @@ header{
 }
 
 .user{
-  ma
+  margin-left:auto;
+  background:linear-gradient(135deg,var(--neon2),var(--neon));
+  color:#000;
+}
+
+.ai{
+  background:rgba(20,20,35,0.9);
+  border:1px solid rgba(255,255,255,0.2);
+}
+
+/* FOOTER */
+footer{
+  display:flex;
+  gap:10px;
+  padding:14px;
+  background:rgba(0,0,0,0.75);
+}
+
+input{
+  flex:1;
+  padding:12px;
+  border-radius:12px;
+  border:none;
+  background:rgba(11,14,28,0.9);
+  color:var(--text);
+}
+
+button{
+  padding:12px 16px;
+  border-radius:12px;
+  border:none;
+  cursor:pointer;
+  background:linear-gradient(135deg,var(--neon),var(--neon2));
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<!-- AUDIO GREETING -->
+<audio id="greetingAudio" src="_Greetings i am Echo.mp3"></audio>
+
+<div class="app">
+  <header>
+    <div class="logo"></div>
+    <div>
+      <h2>Echo AI</h2>
+      <small>Offline Smart Assistant</small>
+    </div>
+  </header>
+
+  <div class="chat" id="chat"></div>
+
+  <footer>
+    <input id="input" placeholder="Ask Echo anything..." />
+    <button onclick="send()">Send</button>
+    <button onclick="startMic()">🎤</button>
+    <button onclick="clearChat()">Clear</button>
+  </footer>
+</div>
+
+<script>
+const chat=document.getElementById('chat');
+const input=document.getElementById('input');
+
+function addMsg(text,cls){
+  const d=document.createElement('div');
+  d.className='msg '+cls;
+  d.innerText=text;
+  chat.appendChild(d);
+  chat.scrollTop=chat.scrollHeight;
+}
+
+function normalize(t){
+  return t.toLowerCase().replace(/[^a-z0-9+\-*/^().√∛ ]/g,' ').replace(/\s+/g,' ').trim();
+}
+
+function startMic(){
+  if(!('webkitSpeechRecognition'in window)) return alert('Mic not supported');
+  const rec=new webkitSpeechRecognition();
+  rec.lang='en-IN';
+  rec.onresult=e=>{
+    input.value=e.results[0][0].transcript;
+    send();
+  };
+  rec.start();
+}
+
+function aiReply(text){
+  const t=normalize(text);
+
+  if(/\btime\b/.test(t))
+    return '🕒 Current Time (IST): '+new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata'});
+  if(/\bdate\b/.test(t))
+    return '📅 Today\'s Date (IST): '+new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'});
+
+  if(/[0-9]/.test(t)&&(/[+\-*/^√∛]/.test(t)||/square root|cube root|sqrt|cbrt/.test(t))){
+    try{
+      let expr=t
+        .replace(/square root/g,'Math.sqrt')
+        .replace(/cube root/g,'Math.cbrt')
+        .replace(/√/g,'Math.sqrt')
+        .replace(/∛/g,'Math.cbrt')
+        .replace(/\^/g,'**');
+      return '🧮 Result: '+Function('return '+expr)();
+    }catch{}
+  }
+
+  if(/^(67|6677|666777|66667777|69)$/.test(t)) return t;
+
+  const qa=[
+    [['who are you','what are you'],'I am Echo AI, an offline smart assistant.'],
+    [['who made you','who created you'],'I was made by Sriram Pathruni, Shreyas Sreedharan, and Kavin Kashyap.'],
+    [['photosynthesis'],'Photosynthesis is the process by which green plants make food using sunlight, water, and CO₂.'],
+    [['gravity'],'Gravity is the force that attracts objects toward each other.'],
+    [['friction'],'Friction is the force that resists motion between two surfaces.'],
+    [['prime number'],'A prime number has exactly two factors: 1 and itself.'],
+    [['fraction'],'A fraction represents a part of a whole.'],
+    [['decimal'],'A decimal represents numbers using a decimal point.'],
+    [['triangle'],'Triangles have three sides and an angle sum of 180°.'],
+    [['newton'],'Newton’s Third Law: every action has an equal and opposite reaction.'],
+    [['snowflake'],'Snowflake is a cloud-based data warehouse.'],
+    [['ai ml dl'],'AI is the field, ML learns from data, DL uses neural networks.'],
+    [['study'],'Effective studying involves revision, understanding, and breaks.'],
+    [['concentration'],'Improve concentration by reducing distractions and taking breaks.'],
+    [['negative thoughts'],'Practice mindfulness and talk to someone you trust.']
+  ];
+
+  for(const [keys,reply] of qa){
+    if(keys.some(k=>t.includes(k))) return reply;
+  }
+
+  if(/\b(hi|hello|hey)\b/.test(t)) return 'Hello 👋 How can I help you today?';
+  if(/\b(nice|ok|okay|nice ok)\b/.test(t)) return '😄 Glad you liked it!';
+  if(/\b(thanks|thank you|thank you so much|thanks very much|thanks soo much|thx|ty)\b/.test(t)) return 'You’re very welcome 😊';
+  if(/\b(bye|cya|see you)\b/.test(t)) return 'Goodbye 👋';
+
+  return 'I am sorry, I cannot help you with this question because I am an offline AI and can answer only from a predefined set of questions. I humbly apologize for my inconvenience.';
+}
+
+function send(){
+  const text=input.value.trim();
+  if(!text) return;
+  input.value='';
+  addMsg(text,'user');
+  setTimeout(()=>addMsg(aiReply(text),'ai'),400);
+}
+
+function clearChat(){
+  chat.innerHTML='';
+  addMsg('Welcome. I am Echo AI.','ai');
+}
+
+input.addEventListener('keydown',e=>{
+  if(e.key==='Enter') send();
+});
+
+// PLAY AUDIO IMMEDIATELY ON PAGE LOAD
+window.onload=()=>{
+  const audio=document.getElementById('greetingAudio');
+  audio.play().catch(()=>{
+    // Fallback: play on first click if autoplay blocked
+    document.body.addEventListener('click',()=>audio.play(),{once:true});
+  });
+};
+
+addMsg('Welcome. I am Echo ai.','ai');
+</script>
+
+</body>
+</html>
